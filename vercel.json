@@ -9,10 +9,10 @@
     { "src": "/(.*)", "dest": "/index.html" }
   ],
   "env": {
-    "SUPABASE_URL": "",
-    "SUPABASE_ANON_KEY": "",
-    "TELEGRAM_BOT_TOKEN": "",
-    "TELEGRAM_CHAT_ID": "",
+    "SUPABASE_URL": "https://cxhpxwjhguoumavqvhxg.supabase.co",
+    "SUPABASE_ANON_KEY": "sb_publishable_hwazGN8JO8tR9KH-pbOCbg_O7zaqGKp",
+    "TELEGRAM_BOT_TOKEN": "8743353544:AAGxzd8cFqhT8mVGyVVV1RADKn69mbUxuhA",
+    "TELEGRAM_CHAT_ID": "-5172490081",
     "CLOUDINARY_CLOUD_NAME": "",
     "CLOUDINARY_API_KEY": "",
     "CLOUDINARY_API_SECRET": ""
