@@ -1,0 +1,15 @@
+last-asylum-chat/
+├── index.html                 # Главная страница
+├── css/
+│   └── style.css             # Стили в стиле Last Asylum
+├── js/
+│   ├── app.js                # Frontend логика
+│   ├── supabase-client.js    # Настройка Supabase
+│   └── utils.js              # Вспомогательные функции
+├── api/
+│   ├── send-to-telegram.js   # Отправка в Telegram
+│   ├── send-to-vk.js         # Отправка в VK
+│   └── upload-image.js       # Загрузка картинок
+├── vercel.json               # Настройка Vercel
+├── package.json              # Зависимости
+└── README.md                 # Инструкция
