@@ -1,25 +1,36 @@
 // api/send-to-telegram.js
-import { supabase } from '../js/supabase-client.js'; // Для локальной разработки
-// В production используем process.env
+import { createClient } from '@supabase/supabase-js';
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+// Создаём клиент Supabase для сервера
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY // ⚠️ Только для сервера!
+);
 
 export default async function handler(req, res) {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
-  
-  const { nickname, message, imageUrl, platform } = req.body;
-  
-  if (!nickname || !message) {
-    return res.status(400).json({ error: 'Nickname and message required' });
-  }
-  
-  const formattedText = `[${nickname}${platform ? `@${platform}` : ''}] ${message}`;
-  
+
   try {
-    // 1. Сохраняем в базу
+    const { nickname, message, imageUrl, platform } = req.body;
+
+    if (!nickname || !message) {
+      return res.status(400).json({ error: 'Nickname and message required' });
+    }
+
+    const formattedText = `[${nickname}${platform ? `@${platform}` : ''}] ${message}`;
+
+    // 1. Сохраняем в базу Supabase
     const { data: dbData, error: dbError } = await supabase
       .from('messages')
       .insert([{
@@ -31,33 +42,42 @@ export default async function handler(req, res) {
       }])
       .select()
       .single();
-    
-    if (dbError) throw dbError;
-    
+
+    if (dbError) {
+      console.error('Supabase error:', dbError);
+      throw dbError;
+    }
+
     // 2. Отправляем в Telegram
-    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+
+    if (token && chatId) {
       let telegramText = formattedText;
       if (imageUrl) {
         telegramText += `\n\n📷 Скриншот: ${imageUrl}`;
       }
-      
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+
+      const telegramResponse = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          chat_id: TELEGRAM_CHAT_ID,
+          chat_id: chatId,
           text: telegramText,
           parse_mode: 'HTML'
         })
       });
+
+      if (!telegramResponse.ok) {
+        const errorData = await telegramResponse.json();
+        console.error('Telegram API error:', errorData);
+      }
     }
-    
-    // 3. TODO: Отправка в VK (аналогично)
-    
+
     res.status(200).json({ success: true, id: dbData.id });
-    
+
   } catch (error) {
     console.error('Send error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
